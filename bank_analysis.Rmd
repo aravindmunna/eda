@@ -1,0 +1,167 @@
+---
+title: "Bank Campaign Analysis"
+author: "Kathirmani Sukumar"
+date: "February 19, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+banking = read.csv('e:/datasets/bank-full.csv', sep=';')
+dim(banking)
+```
+
+
+
+```{r}
+job_col = banking %>% group_by(job) %>% summarise(job_freq=n()) %>% arrange(-job_freq) %>% mutate(cum_freq_per=cumsum(job_freq / nrow(banking)*100))
+
+
+job_col %>% ggplot(aes(x=reorder(job, job_freq), y=job_freq)) + geom_bar(stat='identity', fill='steelblue') + coord_flip() + xlab('Job Type') + ylab('Frequency')
+
+job_col %>% ggplot(aes(x=reorder(job, cum_freq_per), y=cum_freq_per)) + geom_line(group=1, color='steelblue') + xlab('Job Type') + ylab('Cumulative Frequency')
+
+```
+
+```{r}
+col = 'marital'
+col_summary = banking %>% group_by_(col) %>% summarise(col_count=n(), freq_per=n()/nrow(banking)*100) %>% arrange(-freq_per) %>% mutate(cum_per=cumsum(freq_per))
+
+col_summary %>% ggplot(aes_string(x=paste0('reorder(',col,',freq_per)'), y='col_count')) + geom_bar(stat='identity', fill='steelblue') + coord_flip() + xlab(col) + ylab('Frequency')
+
+
+```
+
+```{r}
+tweets = read.csv('e:/datasets/narendramodi_tweets.csv')
+odi = read.csv('e:/datasets/odi-batting.csv')
+
+hist(banking$balance)
+banking %>% ggplot(aes(x=balance)) + geom_density()
+
+```
+
+```{r}
+x = c(0,1,2,3,4,5,6,7,8,9, 10)
+cut(x, 5, labels=c('B1', 'B2', 'B3', 'B4', 'B5'))
+```
+
+
+## Bivariate Analysis
+### Crosstab Analysis
+- Identify depending between two categorical variables
+```{r}
+job_education = as.data.frame(table(banking$job, banking$education))
+names(job_education) = c('job','education', 'Freq')
+head(job_education)
+```
+
+
+```{r}
+ggplot(job_education, aes(x=education, y=job, size=Freq))+geom_point()
+```
+
+
+```{r}
+job_married = as.data.frame(table(banking$job, banking$marital))
+
+ggplot(job_married, aes(y=Var1, x=Var2, size=Freq)) +geom_point()
+ggplot(job_married, aes(y=Var1, x=Var2, fill=-Freq)) +geom_tile()
+```
+
+
+```{r}
+banking$balance_group = cut(banking$balance, 5, labels=c('Group1', 'Group2', 'Group3', 'Group4', 'Group5'))
+balance_job = as.data.frame(table(banking$job, banking$balance_group))
+ggplot(balance_job, aes(x=Var2, y=Var1, size=Freq))+geom_point()
+ggplot(balance_job, aes(x=Var2, y=Var1, fill=-Freq))+geom_tile()
+```
+
+```{r}
+table(banking$job, banking$marital)
+```
+
+```{r}
+chi = chisq.test(banking$job, banking$education)
+chi$p.value
+```
+
+```{r}
+balance_job = as.data.frame(table(banking$job, banking$balance_group))
+ggplot(balance_job, aes(x=Var2, y=Var1, fill=Freq))+geom_tile()
+```
+
+```{r}
+# Step 1: Get all the factors/categorical column names
+get_factors = function(df){
+  v = sapply(df, is.factor)
+  return(names(df)[v])
+}
+df_factors = get_factors(banking)
+
+# Step 2: Combinations of categorical columns. Pick 2 at a time
+factors_comb = combn(df_factors,2, simplify = FALSE)
+
+# Step 3: Loop through each combination
+for (comb in factors_comb){
+  #print(comb)
+  chi_res = chisq.test(banking[, comb[1]], banking[, comb[2]])
+  #print (c(comb[1], comb[2], chi_res$p.value))
+  if (chi_res$p.value < 0.05){
+    print(comb)
+  }
+}
+
+
+```
+```{r}
+
+```
+
+
+```{r}
+correlation_analysis = function(df){
+  cor_threshold = 0.75
+  result = data.frame(Var1=character(), Var2=character(),
+                    Correlation=numeric())
+
+  num_cols = names(df)[sapply(df, is.numeric)]
+  for (comb in combn(num_cols, 2, simplify = F)){
+    df_subset = df %>% select_(comb[1], comb[2])
+    df_subset = na.omit(df_subset)
+    comb_cor = cor(df_subset[,comb[1]], df_subset[, comb[2]])
+
+    if (abs(comb_cor)>cor_threshold){
+      res_cur = list(Var1=as.character(comb[1]), Var2=as.character(comb[2]), Correlation=as.numeric(comb_cor))
+      result$Var1 = as.character(result$Var1)
+      result$Var2 = as.character(result$Var2)
+      result = rbind(result, res_cur)
+    }
+  }
+  result = result %>% mutate(abs_cor = abs(Correlation)) %>% arrange(-abs_cor) %>% select(-abs_cor)
+  return(result)
+}
+stocks = read.csv('stock_prices.csv')
+x = correlation_analysis(stocks)
+x
+```
+
+```{r}
+banking %>% select_(comb[1], comb[2])
+```
+
+```{r}
+source('eda.R')
+stocks = read.csv('stock_prices.csv')
+#correlation_analysis(stocks)
+
+summary = eda(stocks)
+summary$correlation
+```
+
+

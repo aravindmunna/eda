@@ -1,0 +1,75 @@
+---
+title: "Parliament Analysis"
+author: "Kathirmani Sukumar"
+date: "February 20, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+parliament = read.csv('e:/datasets/parliament.csv')
+names(parliament)
+```
+
+
+### Q: How many unique parties for the year 2009
+```{r}
+parliament %>% filter(YEAR==2009) %>% summarise(parties=length(unique(PARTY)))
+```
+
+
+### Q: How many contestants for the year 2009 in BJP, INC
+
+```{r}
+parliament %>% filter(YEAR==2009, PARTY %in% c('BJP', 'INC')) %>% group_by(PARTY) %>%  summarise(n_contestants=n())
+```
+
+### Q: How many contestants won the election for the year 2009 in BJP, INC. Also calcualte the percentage of winning as well.
+```{r}
+parliament %>% filter(YEAR==2009, PARTY %in% c('BJP', 'INC')) %>% group_by(PARTY) %>%  summarise(contested=n(), won=sum(Position==1), per_win=sum(Position==1)/n()*100)
+```
+
+#### Q: For the year 2009, in Karnataka, for the PC Bangalore Central, calulate the following metrics
+- Total number of voters
+- Total number of electors
+- Total number of candidates
+- Voters Turn out
+```{r}
+parliament %>% filter(YEAR==2009, STATE=='KARNATAKA', PC=='BANGALORE CENTRAL') %>% summarise(total_voters=sum(VOTES,na.rm=T),                                                total_electors=min(ELECTORS,na.rm=T),                                                 total_candidates=n(),                                                                 voters_turnout=total_voters/total_electors*100)
+```
+
+#### Q: For the state Karnataka and PC Bangalore North, yearwise voters turnout 
+```{r}
+parliament %>% filter(STATE=='KARNATAKA', PC=='BANGALORE NORTH') %>% group_by(YEAR) %>% summarise(total_voters=sum(VOTES,na.rm=T),                                                total_electors=min(ELECTORS,na.rm=T),                                                 total_candidates=n(),                                                                 voters_turnout=total_voters/total_electors*100)
+```
+
+#### For 2009, compute total number of votes for BJP and identify the percentage of votes for them
+```{r}
+parliament %>% filter(YEAR==2009, PARTY=="BJP") %>%  summarise(VOTES=sum(VOTES,na.rm=T),ELECTORS=sum(ELECTORS,na.rm=T))
+```
+#### For 2009, compute total number of votes for BJP, INC and identify the percentage of votes for them
+```{r}
+parliament %>% filter(YEAR==2009, PARTY %in% c("BJP", 'INC')) %>% group_by(PARTY) %>%  summarise(VOTES=sum(VOTES,na.rm=T),ELECTORS=sum(ELECTORS,na.rm=T))
+```
+
+### Q: Yearwise total number of voters and electors and compute voters turnout
+```{r}
+parliament %>% group_by(YEAR, STATE, PC) %>% summarise(VOTES=sum(VOTES, na.rm=T), ELECTORS=min(ELECTORS,na.rm=T))  %>% group_by(YEAR) %>% summarise(VOTES=sum(VOTES), ELECTORS=sum(ELECTORS), VOTER_TURNOUT=VOTES/ELECTORS*100)
+```
+
+```{r}
+pc_contestants = parliament %>% filter(YEAR==1999) %>% group_by(STATE, PC) %>% summarise(contestants =n())
+boxplot(pc_contestants$contestants)
+
+pc_contestants %>% filter(contestants>20) %>% group_by(STATE) %>% summarise(STATE_COUNT=n()) %>% arrange(-STATE_COUNT)
+```
+
+```{r}
+
+```
+

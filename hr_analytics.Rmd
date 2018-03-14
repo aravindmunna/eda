@@ -1,0 +1,125 @@
+---
+title: "HR Analytics"
+author: "Kathirmani Sukumar"
+date: "March 5, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(corrplot)
+source('eda.R')
+hr = read.csv('e:/datasets/ibm-watson/HR Analytics.csv')
+```
+
+```{r}
+ggplot(hr, aes(x=Department, y=MonthlyIncome)) + geom_boxplot()
+```
+
+```{r}
+hist(hr$MonthlyIncome)
+plot(density(hr$MonthlyIncome))
+ggplot(hr, aes(MonthlyIncome,color=Gender)) +geom_density()
+```
+### T-Test
+```{r}
+t_test = t.test(MonthlyIncome~Gender, data=hr)
+t_test$p.value
+```
+
+### ANNOVA
+```{r}
+# influencers = c('MartialStatus', 'Department', 'JobRole')
+aov_summary = aov(MonthlyIncome~MaritalStatus, data=hr)
+summary(aov_summary)[[1]][1, 'Pr(>F)']
+```
+
+```{r}
+get_categories = function(df){
+  return (names(which(sapply(df, is.factor))))
+}
+
+annova_analysis = function(df, kpi_col){
+  kpi_influencers = c()
+  cat_cols = get_categories(df)
+  for(col in cat_cols){
+    n_groups = nlevels(hr[,col])
+    if ((col != kpi_col) &  (n_groups>=2)){
+      formula_aov = paste0(c(kpi_col, col), collapse = '~')
+      test_aov = aov(as.formula(formula_aov), data=df)
+      p_aov = summary(test_aov)[[1]][1, 'Pr(>F)']
+      if (p_aov < 0.05){
+        kpi_influencers = c(kpi_influencers, col)
+      }
+    }
+  }
+  return (kpi_influencers)
+}
+annova_analysis(hr, 'Age')
+```
+
+
+
+```{r}
+get_categories = function(df){
+  return (names(which(sapply(df, is.factor))))
+}
+
+annova_analysis = function(df, kpi_col){
+  cat_cols = get_categories(df)
+  influencers = c()
+  for (col in cat_cols){
+    ncats = nlevels(df[, col])
+    if (ncats > 1){
+      aov_summary = summary(aov(df[,kpi_col] ~ df[,col]))
+      p_aov = aov_summary[[1]][1, 'Pr(>F)']
+      if (p_aov < 0.05) influencers = c(influencers, col)
+    }
+  }
+  return (influencers)
+}
+annova_analysis(hr, 'MonthlyIncome')
+```
+
+
+```{r}
+cols = c('A', 'B', 'C')
+for (i in seq(1, length(cols))){
+  print (cols[i])
+  print ('------')
+}
+
+```
+```{r}
+numeric_influencers = function(df, kpi_col){
+  result = c()
+  cols = colnames(df)
+  for (col in cols){
+    if (is.numeric(df[,col]) & (col != kpi_col)){
+      if (sd(df[,col])>0){
+        corr_val = cor(df[,col], df[,kpi_col])    
+        abs_corr_val = abs(corr_val)
+        if (abs_corr_val > 0.75){
+          result = c(result, col)
+        }      
+      }
+    }
+  }
+  return (result)  
+}
+numeric_influencers(hr, 'PercentSalaryHike')
+
+```
+
+
+
+
+
+
+
+

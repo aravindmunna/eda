@@ -1,0 +1,122 @@
+---
+title: "Twitter Analysis"
+author: "Kathirmani Sukumar"
+date: "February 19, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tm)
+library(dplyr)
+library(ggplot2)
+modi = read.csv('e:/datasets/narendramodi_tweets.csv')
+```
+
+```{r}
+modi$retweets_bins = cut(modi$retweets_count, 5)
+modi %>% group_by(retweets_bins) %>% summarise(count_bins = n()) %>% ggplot(aes(x=reorder(retweets_bins, count_bins), y=count_bins)) + geom_bar(stat='identity', fill='steelblue') + coord_flip() + xlab('Retweets Bins') + ylab('Frequency count')
+# sapply(seq(1,20), function(x) paste0('B',x))
+```
+
+```{r}
+text = as.character(modi$text) # convert to character
+text_lower = tolower(text) # convert to lower case
+
+text_words = strsplit(text_lower, ' ') # At row level, split text to words
+words_flatten = unlist(text_words) # Flatten the 2 dimension to a single vector
+words_freq = table(words_flatten) # Calculate frequency of each word
+
+df_words_freq = as.data.frame(words_freq)
+names(df_words_freq) = c('words', 'freq')
+View(df_words_freq)
+df_words_freq %>% arrange(-freq) %>% head(10)
+stop_words = stopwords()
+dim(df_words_freq)
+
+df_words_freq = df_words_freq[!df_words_freq$words %in% stop_words, ]
+df_words_freq %>% arrange(-freq) %>% head(50)
+```
+
+
+
+```{r}
+library(stringi)
+modi$text = as.character(modi$text)
+
+# Get no. of characters
+modi$text_nchar = nchar(modi$text) 
+
+# Get no. of words in each row
+modi$text_nwords = sapply(strsplit(modi$text, ' '), length)
+
+# Count how many times the word india is appearing in each sentenc
+modi$india = stri_count(tolower(modi$text), fixed='india')
+
+# For each top word create a new column in your original data frame
+top_words_list = df_words_freq %>% arrange(-freq) %>% head(10)
+for (word in top_words_list$words){
+  modi[, word] = stri_count(tolower(modi$text), fixed=word)
+}
+
+View(modi %>% select(text, text_nchar, text_nwords, ind))
+View(modi)
+```
+
+```{r}
+samp = c('this is one', 'second sentence', 'third row')
+sapply(strsplit(samp, ' '), length)
+
+strsplit(samp, ' ')
+```
+
+### Location columns
+```{r}
+
+```
+
+
+## Bivariate Analysis
+```{r}
+names(modi)
+ggplot(modi, aes(x=favorite_count, y=retweets_count)) + geom_point() + geom_smooth()
+```
+
+```{r}
+boxplot(modi$favorite_count)
+```
+
+```{r}
+boxplot(modi$retweets_count)
+```
+
+```{r}
+modi %>% group_by(source) %>% summarise(cou=n()/nrow(modi)*100) %>% arrange(-cou)
+nlevels(modi$source)
+```
+
+```{r}
+x = as.data.frame(table(modi$source, modi$lang))
+names(x) = c('source','lang','Freq')
+ggplot(x, aes(x=source, y=lang, size=Freq))+geom_point() + theme_bw()
+```
+
+```{r}
+unique(modi$source)
+```
+
+```{r}
+modi$hashtags_count = as.factor(modi$hashtags_count)
+ggplot(modi, aes(x=hashtags_count, y=favorite_count))+geom_boxplot()
+```
+
+
+
+
+```{r}
+
+```
+

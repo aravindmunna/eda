@@ -1,0 +1,27 @@
+---
+title: "Correlation Analysis"
+author: "Kathirmani Sukumar"
+date: "February 26, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+```{r}
+library(dplyr)
+library(corrplot)
+stocks = read.csv('stock_prices.csv')
+```
+
+```{r}
+corr_matrix = cor(na.omit(stocks) %>% select(-Date, -Samsung))
+corrplot(corr_matrix, method='color', order='hclust', addrect = 3)
+```
+
+```{r}
+ggplot(stocks, aes(x=Amazon, y=Infosys)) + geom_point() + geom_smooth()
+
+```
+

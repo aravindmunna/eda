@@ -1,0 +1,36 @@
+---
+title: "Data cleaning"
+author: "Kathirmani Sukumar"
+date: "March 13, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(VIM)
+library(dplyr)
+library(hflights)
+library(mice)
+stocks = read.csv('stock_prices.csv')
+parliament = read.csv('e:/datasets/parliament.csv')
+odi = read.csv('e:/datasets/odi-batting.csv')
+data("hflights")
+```
+
+```{r}
+x = matrix(c(1,1,NA, 1,1,NA, NA, NA,1, 1,NA,1,NA,NA,NA,NA,NA,NA, NA,NA,NA), 7,3)
+View(x)
+z = aggr(x)
+z$tabcomb
+aggr(x)
+```
+
+```{r}
+stocks_imputed = complete(mice(stocks))
+dim(stocks_imputed)
+View(stocks_imputed)
+```
+

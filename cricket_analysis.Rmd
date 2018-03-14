@@ -1,0 +1,196 @@
+---
+title: "ODI Cricket Analysis"
+author: "Kathirmani Sukumar"
+date: "February 13, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(tidyverse)
+odi = read.csv('e:/datasets/odi-batting.csv')
+```
+
+
+# Cricket Analysis
+- [This is hyperlink](http://www.google.com)
+- Missing value analysis
+- Univariate Analysis
+- Bivariate Analysis
+
+## Data Preview
+```{r}
+kable(head(odi))
+```
+
+### Display the dimension of the data (no. of rows and columns)
+```{r}
+dim(odi)
+```
+
+### Display unique countries and also the total number of unique countries
+```{r}
+print (unique(odi$Country))
+print (nlevels(odi$Country))
+```
+
+
+### Identify how many records are there for Sachin R Tendulkar
+```{r}
+odi %>% filter(Player == "Sachin R Tendulkar") %>% nrow() #summarise(matches=n())
+```
+
+### Display top ten players based on total runs
+```{r}
+odi %>% group_by(Player) %>% summarise(total_runs=sum(Runs, na.rm=T)) %>% arrange(-total_runs) %>% head(10)
+```
+
+##### Identify top ten players by total number of matches and filter the data for those ten players and count the number of rows
+```{r}
+# Identify top ten players by total numher of matches
+top_players = odi %>% group_by(Player) %>% summarise(matches=n()) %>% arrange(-matches) %>% head(10)
+top_players
+
+# Filter the data for those ten players and calculate total number of rows
+odi %>% filter(Player %in% top_players$Player) %>% nrow()
+```
+
+###### For top ten players based on maximum runs and calculate the following 
+- total runs
+- average score rate
+- total number of matches they have played
+- total number of ducks
+
+Sort the output by total number of matches
+```{r}
+top_player = odi %>% group_by(Player) %>% summarise(maxruns=max(Runs, na.rm=T)) %>% arrange(-maxruns) %>% head(10)
+
+odi %>% filter(Player %in% top_player$Player) %>% group_by(Player) %>% summarise(total=sum(Runs, na.rm=T), avgSR=mean(ScoreRate, na.rm=T), total_matches=n(), ducks=sum(Runs==0,na.rm=T), centuries=sum(Runs>99, na.rm=T)) %>% arrange(-total_matches)
+```
+
+
+### Missing values
+```{r} 
+missing_rows_runs = row.names(odi[is.na(odi$Runs), ])
+View(odi[missing_rows_runs, c('Runs', 'ScoreRate')])
+
+View(odi[c(1033), ])
+```
+###Column wise total number of missing values
+
+```{r}
+
+```
+
+### Get percentage of missing values
+```{r}
+sum(is.na(odi$Runs)) / nrow(odi) * 100
+```
+
+
+### Percentage of outliers
+```{r}
+q1 = quantile(odi$Runs, 0.25, na.rm=T)
+q2 = quantile(odi$Runs, 0.5, na.rm=T)
+q3 = quantile(odi$Runs, 0.75, na.rm=T)
+val_2per = quantile(odi$Runs, 0.02, na.rm=T) 
+val_98per = quantile(odi$Runs, 0.98, na.rm=T)
+print(c(q1, q2, q3))
+iqr = q3 - q1
+iqr
+lw = q1 - 1.5 * iqr
+uw = q3 + 1.5 * iqr
+print (c(lw, uw, val_2per, val_98per))
+boxplot(odi$Runs)
+```
+
+
+```{r}
+outliers = odi %>% filter((Runs<lw) | (Runs>uw))
+nrow(outliers) / sum(!is.na(odi$Runs)) * 100
+```
+
+
+### Frequency distribution on categorical column
+```{r}
+odi %>% group_by(Player) %>% summarise(total_matches=n()) %>% arrange(-total_matches)
+```
+
+```{r}
+ggplot(odi, aes(x=Country)) + geom_bar(fill='steelblue') + coord_flip() 
+```
+
+
+
+
+```{r}
+odi %>% group_by(Player) %>% summarise(total_matches=n(), total_runs=sum(Runs, na.rm=T)) %>% arrange(-total_matches) %>% head(10) %>% ggplot(aes(x=reorder(Player, total_matches), y=total_matches)) + geom_bar(stat='identity', fill='steelblue') + coord_flip() + xlab('Player Name') + ylab('Total No. of Matches')
+```
+
+
+
+```{r}
+odi %>% group_by(Player) %>% summarise(total_matches=n() / nrow(odi) * 100) %>% arrange(-total_matches) %>% mutate(cum_sum= cumsum(total_matches)) %>% ggplot(aes(x=reorder(Player, cum_sum), y=cum_sum)) + geom_line(group=1)
+```
+
+
+```{r}
+
+odi$Bins = cut(odi$Runs, breaks =c(-0.01,10, 49, 75, 90, 99, Inf), labels=c('b1', 'b2', 'b3','b4','b5', 'b6') )
+odi %>% ggplot(aes(x=Bins)) + geom_bar(fill='steelblue')
+```
+
+
+### Geographical Analysis
+```{r}
+library(ggmap)
+
+countries = unique(as.character(odi$Ground))
+countries_geo = geocode(countries[1:100])
+countries_geo$country = countries
+countries_geo$lat_long = paste0(countries_geo$lat, ',', countries_geo$lon)
+
+write.csv(countries_geo, 'locations.csv')
+```
+
+### Date columns
+```{r}
+odi$date = as.Date(odi$MatchDate, '%m-%d-%Y')
+odi$year = format(odi$date, '%Y')
+odi$month = format(odi$date, '%m')
+odi$day = format(odi$date, '%d')
+odi$weekday = format(odi$date, '%A')
+odi$quarter = quarters(odi$date)
+# odi$quarter = format(odi$date, '%q') # Doesn't work. Need to check
+View(odi %>% select(date, year, month, day, weekday, quarter))
+```
+
+## Bi-Variate Analysis
+```{r}
+odi %>% filter(Player=='Sachin R Tendulkar') %>% group_by(year) %>% summarise(total=sum(Runs, na.rm=T), avg_runs=mean(Runs, na.rm=T), median_runs=median(Runs, na.rm=T), matches=n()) %>% ggplot(aes(x=year, y=matches)) + geom_line(group=1, color='steelblue')
+```
+
+### Bivariate Analysis
+```{r}
+odi %>% filter(Player == "Sachin R Tendulkar") %>% ggplot(aes(x=Runs, y=ScoreRate))+geom_point() + geom_smooth()
+```
+
+
+```{r}
+odi %>% group_by(Country) %>% summarise(Runs=sum(Runs, na.rm=T), ScoreRate=mean(ScoreRate, na.rm=T)) %>% ggplot(aes(x=Runs, y=ScoreRate)) + geom_point()
+```
+
+
+```{r}
+top_players = odi %>% group_by(Player) %>% summarise(Runs=sum(Runs, na.rm=T)) %>% arrange(-Runs) %>% head(5)
+
+odi %>% filter(Player %in% top_players$Player) %>% ggplot(aes(x=Player, y=Runs)) + geom_boxplot()
+```
+
+```{r}
+odi %>% ggplot(aes(x=Country, y=Runs)) +geom_boxplot()
+```
+
