@@ -35,8 +35,8 @@ Guidelines:
 	- Date: Derive metrics like year, month, day, weekday, quarter etc
 - **Bivariate Analysis**
   - Numerical columns – Correlation Analysis
-	- One categorical column & one numerical column – Segmented analysis - T-test or ANNOVA
-	- Two categorical column – Crosstab - Chi-square test
+  - One categorical column & one numerical column – Segmented analysis - T-test or ANNOVA
+  - Two categorical column – Crosstab - Chi-square test
 
 
 
