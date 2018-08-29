@@ -1,0 +1,125 @@
+---
+title: "Time Series Analysis"
+author: "Kathirmani Sukumar"
+date: "8/29/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(forecast)
+library(dplyr)
+```
+
+
+### Random Process
+```{r}
+rp = runif(1000, 0, 1)
+plot(rp, type='l')
+plot(density(rp))
+```
+
+```{r}
+t=seq(0,10,0.1)
+y=sin(t)
+e = rnorm(101, 0, 2)
+signal = y + e
+plot(t,signal,type="l", xlab="time", ylab="Sine wave")
+```
+
+### Sample Output
+```{r}
+data("AirPassengers")
+plot(forecast(AirPassengers, h=24))
+```
+
+### Scope for Prediction
+```{r}
+acf(AirPassengers)
+acf(rp)
+```
+
+```{r}
+for (i in seq(1, 5)){
+print(cor(AirPassengers[1:(length(AirPassengers)-i)], AirPassengers[(i+1):length(AirPassengers)]))
+}
+```
+
+```{r}
+print(acf(AirPassengers))
+```
+
+```{r}
+sample_r = rp[1:20]
+sample_r
+
+```
+
+```{r}
+cor(sample_r[2:19],sample_r[2:20])
+```
+
+### Stationarity
+```{r}
+vals = as.vector(AirPassengers)
+for (i in seq(0, 3)){
+  start  = i*36+1
+  end = i*36+36
+  if (i == 0){
+    plot(density(vals[start:end]), xlim=c(0,800))  
+  }else{
+    lines(density(vals[start:end]))  
+  }
+}
+```
+
+```{r}
+vals = rp
+for (i in seq(0, 9)){
+  start  = i*100+1
+  end = i*100+100
+  if (i == 0){
+    plot(density(vals[start:end]), ylim=c(0,1.5))  
+  }else{
+    lines(density(vals[start:end]))  
+  }
+  
+}
+```
+
+
+```{r}
+plot(AirPassengers)
+```
+
+```{r, fig.height=10}
+plot(decompose(AirPassengers))
+```
+
+### Moving Average
+```{r}
+e = rnorm(1)
+y = c(e)
+errors = c(e, rnorm(1))
+for (i in seq(3, 1000)){
+  curr_error = rnorm(1)
+  prev_error = errors[i-1]
+  prev2_error = errors[i-2]
+  curr_y = 0.7*prev_error + 0.2*prev2_error + curr_error
+  y = append(y, curr_y)
+  errors = append(errors, curr_error)
+}
+plot(y, type='l')
+acf(y)
+```
+
+```{r}
+
+```
+
+
+
