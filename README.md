@@ -38,7 +38,7 @@ Guidelines:
   - One categorical column & one numerical column – Segmented analysis - T-test or ANNOVA
   - Two categorical column – Crosstab - Chi-square test
 
-
+- **Dimension Reduction**
 
 ### Techniques
 - Frequency distribution on Categorical Columns
@@ -64,3 +64,20 @@ Guidelines:
 	- Compute % of outliers
 - Correlation Analysis
 	- Is a measure of linear association between two numerical variables
+- PCA Process
+- Standardized input variables
+    - Mean of all cols = 0, Var & Standard Deviation = 1
+    - To compare columns with different units
+- Compute correlation matrix
+- Idenfity Eigen values and vectors
+- Identify how many PCs to retain to store 95% of the information
+- Create PCA model with so many principal components
+- Properties of PCS
+    - All PC are orthogonal to each other; Correlation will be zero
+    - Variance of each PC is equal to variance of the eigen values (desc)
+    - No two PCs share same information
+    - var(PC1) > var(PC2) > var(PC3)....
+- Purpose of PCA?
+    - **Dimension Reduction**: Do not reconstruct. Just pass PCs to ML model
+    - **Data compression**: Store PCs and their eigen vectors
+    - **Noise removal**: Reconstruct your orginal signal
